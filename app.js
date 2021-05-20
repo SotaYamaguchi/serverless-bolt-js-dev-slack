@@ -23,19 +23,33 @@ app.receiver.router.post("/slack/events/masseges", async (req, res) => {
     });
   });
 
-  const massege = data.text.find((_, i) => i === 0);
+  // validation
+  if (!data.email) {
+    res.status(400).send("error: no_email");
+    return;
+  }
+  if (!data.text) {
+    res.status(400).send("error: no_text");
+    return;
+  }
+
   const userEmailList = data.email.find((_, i) => i === 0).split(",");
+  const massege = data.text.find((_, i) => i === 0);
 
   let userIds = [];
   for (const email of userEmailList) {
     try {
       // DM チャンネル一覧を取得
-      const user = await app.client.users.lookupByEmail({ token: accessToken, email: email });
+      const user = await app.client.users.lookupByEmail({
+        token: accessToken,
+        email: email,
+      });
       if (user) {
         userIds = [...userIds, user.user.id];
       }
     } catch (error) {
-      console.log(error);
+      res.status(400).send(`error: user is Not Found. ${email}`);
+      return;
     }
   }
 
@@ -51,7 +65,7 @@ app.receiver.router.post("/slack/events/masseges", async (req, res) => {
     channels
       .filter((x) => {
         return userIds.some((y) => {
-          return y === (x.user);
+          return y === x.user;
         });
       })
       .forEach((x) => {
@@ -62,8 +76,8 @@ app.receiver.router.post("/slack/events/masseges", async (req, res) => {
           blocks: massege,
         });
       });
-    }
-  res.status(200).send('success!!');
+  }
+  res.status(200).send("success!!");
 });
 
 // Handle the Lambda function event
