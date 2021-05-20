@@ -4,6 +4,7 @@
 
 ```terminal
 cp .env.example .env
+npm install
 ```
 
 ## Development
